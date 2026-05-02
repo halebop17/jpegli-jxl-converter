@@ -28,6 +28,7 @@ from PIL import Image
 TIFF_SUFFIXES = {".tif", ".tiff"}
 JPEG_SUFFIXES = {".jpg", ".jpeg"}
 JXL_SUFFIXES  = {".jxl"}
+PNG_SUFFIXES  = {".png"}
 
 RESIZE_MODES = [
     ("long_edge",  "Long Edge"),
@@ -157,11 +158,16 @@ def _extract_icc(src: Path) -> bytes | None:
         return None
 
 
-def _read_tiff_array(src: Path) -> tuple[np.ndarray, bool]:
+def _read_image_array(src: Path) -> tuple[np.ndarray, bool]:
     """
-    Read a TIFF using tifffile and return (array, is_16bit).
+    Read a TIFF or PNG and return (array, is_16bit).
     array dtype is uint8 or uint16 depending on source bit depth.
     """
+    if src.suffix.lower() in PNG_SUFFIXES:
+        img = Image.open(src)
+        arr = np.array(img)
+        is_16bit = arr.dtype == np.uint16
+        return arr, is_16bit
     arr = tifffile.imread(str(src))
     is_16bit = arr.dtype == np.uint16
     return arr, is_16bit
@@ -235,9 +241,9 @@ def convert_tiff(src: Path, dst: Path, quality: int, cjpegli: str,
     icc_profile = _extract_icc(src)
 
     try:
-        arr, is_16bit = _read_tiff_array(src)
+        arr, is_16bit = _read_image_array(src)
     except Exception as exc:
-        raise RuntimeError(f"Failed to read TIFF: {exc}") from exc
+        raise RuntimeError(f"Failed to read image: {exc}") from exc
 
     arr = _normalize_array(arr)
 
@@ -359,9 +365,9 @@ def convert_to_jxl(
     icc_profile = _extract_icc(src)
 
     try:
-        arr, is_16bit = _read_tiff_array(src)
+        arr, is_16bit = _read_image_array(src)
     except Exception as exc:
-        raise RuntimeError(f"Failed to read TIFF: {exc}") from exc
+        raise RuntimeError(f"Failed to read image: {exc}") from exc
 
     arr = _normalize_array(arr)
 
@@ -916,13 +922,13 @@ class ConverterApp(tk.Tk):
         fmt = self._export_format.get()
 
         if fmt == "jxl":
-            folder_label = "Input folder (TIFF + JPEG files)"
-            tree_label   = "Input root folder (recursive TIFF + JPEG scan)"
-            file_label   = "Input TIFF or JPEG file"
+            folder_label = "Input folder (TIFF + PNG + JPEG files)"
+            tree_label   = "Input root folder (recursive TIFF + PNG + JPEG scan)"
+            file_label   = "Input TIFF, PNG, or JPEG file"
         else:
-            folder_label = "Input folder (TIFF + JXL files)"
-            tree_label   = "Input root folder (recursive TIFF + JXL scan)"
-            file_label   = "Input TIFF or JXL file"
+            folder_label = "Input folder (TIFF + PNG + JXL files)"
+            tree_label   = "Input root folder (recursive TIFF + PNG + JXL scan)"
+            file_label   = "Input TIFF, PNG, or JXL file"
 
         if mode == "file":
             self._frm_in.config(text=file_label)
@@ -949,16 +955,16 @@ class ConverterApp(tk.Tk):
         fmt = self._export_format.get()
         if fmt == "jxl":
             filetypes = [
-                ("TIFF / JPEG files", "*.tif *.tiff *.jpg *.jpeg"),
+                ("TIFF / PNG / JPEG files", "*.tif *.tiff *.png *.jpg *.jpeg"),
                 ("All files", "*"),
             ]
-            file_title = "Select a TIFF or JPEG file"
+            file_title = "Select a TIFF, PNG, or JPEG file"
         else:
             filetypes = [
-                ("TIFF / JXL files", "*.tif *.tiff *.jxl"),
+                ("TIFF / PNG / JXL files", "*.tif *.tiff *.png *.jxl"),
                 ("All files", "*"),
             ]
-            file_title = "Select a TIFF or JXL file"
+            file_title = "Select a TIFF, PNG, or JXL file"
 
         if self._mode.get() == "file":
             file_path = filedialog.askopenfilename(
@@ -1000,9 +1006,9 @@ class ConverterApp(tk.Tk):
         fmt = self._export_format.get()
 
         if fmt == "jxl":
-            accepted = TIFF_SUFFIXES | JPEG_SUFFIXES
+            accepted = TIFF_SUFFIXES | JPEG_SUFFIXES | PNG_SUFFIXES
         else:
-            accepted = TIFF_SUFFIXES | JXL_SUFFIXES
+            accepted = TIFF_SUFFIXES | JXL_SUFFIXES | PNG_SUFFIXES
 
         if mode == "file":
             files = [self._input_file] if self._input_file and self._input_file.exists() else []

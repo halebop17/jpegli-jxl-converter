@@ -1,9 +1,10 @@
-plan.md
 .venv/
 __pycache__/
 *.pyc
 .vscode/
 TIFF Converter.app/
+requirements.txt
+pyside6_app/
 check_tiff.py
 build/
 dist/
