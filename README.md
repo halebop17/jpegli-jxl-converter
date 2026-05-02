@@ -1,8 +1,8 @@
 # JPG Master - JPEGLI & JXL Converter
 
-A macOS desktop app that converts TIFF and JPEG sources to high-quality JPEG or JPEG XL.
+A macOS desktop app that converts TIFF, PNG, and JPEG sources to high-quality JPEG or JPEG XL.
 
-Built around Google's [jpegli](https://github.com/google/jpegli) encoder and JPEG XL tooling, the app supports TIFF→JPEG, TIFF→JXL, JPEG→JXL lossless transcode, and JXL→JPEG round-trip reconstruction. That JPEG→JXL lossless path is a special workflow not found in most converters, because it preserves JPEG data exactly while migrating it into the JXL container.
+Built around Google's [jpegli](https://github.com/google/jpegli) encoder and JPEG XL tooling, the app supports TIFF→JPEG, PNG→JPEG, TIFF→JXL, PNG→JXL, JPEG→JXL lossless transcode, and JXL→JPEG round-trip reconstruction. That JPEG→JXL lossless path is a special workflow not found in most converters, because it preserves JPEG data exactly while migrating it into the JXL container.
 
 jpegli is currently one of the strongest JPEG encoders available for real-world photo export workflows because it improves quality-per-byte while remaining 100% baseline JPEG compatible. In practice, compared with older libjpeg-style encoders used in many photo apps and pipelines, jpegli typically delivers:
 
@@ -16,8 +16,8 @@ By default, metadata is preserved in the output — EXIF (camera make/model, exp
 
 ## What this app does
 
-- Converts TIFF sources to high-quality JPEG using Google's `jpegli` encoder.
-- Supports JPEG XL export, including TIFF→JXL and JPEG→JXL lossless transcode.
+- Converts TIFF and PNG sources to high-quality JPEG using Google's `jpegli` encoder.
+- Supports JPEG XL export, including TIFF→JXL, PNG→JXL, and JPEG→JXL lossless transcode.
 - Supports JXL input when exporting JPEG, using round-trip reconstruct for JXL files.
 - Automatically filters accepted source filenames based on the chosen export format.
 - Offers selectable parallel conversion worker counts: 1, 2, 4, or 6.
@@ -51,13 +51,13 @@ Click **Convert** to start. A progress bar tracks each file as it is processed.
 
 1. The app scans the selected source in `Single File`, `Single Folder`, or `All Subfolders` mode.
 2. The accepted input file types change with the selected export format:
-	- `JPEG` export accepts TIFF and JXL sources.
-	- `JXL` export accepts TIFF and JPEG sources.
-3. When the source is TIFF, the app reads it with `tifffile` and preserves the original source bit depth.
-4. TIFF content is normalized to RGB/grayscale and optionally resized.
+	- `JPEG` export accepts TIFF, PNG, and JXL sources.
+	- `JXL` export accepts TIFF, PNG, and JPEG sources.
+3. When the source is TIFF, the app reads it with `tifffile` and preserves the original source bit depth. PNG sources are read via Pillow.
+4. Image content is normalized to RGB/grayscale and optionally resized.
 5. The image is written to a temporary PNG intermediary:
 	- 16-bit TIFF source → 16-bit PNG intermediary
-	- 8-bit TIFF source → 8-bit PNG intermediary
+	- 8-bit TIFF/PNG source → 8-bit PNG intermediary
 6. The selected encoder converts the PNG:
 	- `cjpegli` encodes JPEG output.
 	- `cjxl` encodes JXL output, with an effort slider for faster or smaller results.
@@ -74,7 +74,7 @@ Click **Convert** to start. A progress bar tracks each file as it is processed.
 - The intermediary PNG is lossless. For 16-bit TIFFs, the intermediary is explicitly written as 16-bit PNG, so `cjpegli` receives high-precision input.
 - Final output is still standard JPEG (8-bit format), but jpegli processes from the higher-precision source path when available.
 - If ExifTool is not installed, conversion still works — only metadata transfer is skipped.
-- Export format determines accepted source files: `JPEG` mode scans TIFF and JXL, while `JXL` mode scans TIFF and JPEG.
+- Export format determines accepted source files: `JPEG` mode scans TIFF, PNG, and JXL, while `JXL` mode scans TIFF, PNG, and JPEG.
 - The JXL effort slider controls encoding speed versus compression efficiency for JXL export.
 - Parallel conversions use multiple worker threads. Choosing 2, 4, or 6 workers improves batch throughput on multi-core systems.
 - In `All Subfolders` mode with mirror disabled, each source folder gets its own `converted/` subfolder.
