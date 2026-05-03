@@ -466,6 +466,11 @@ class ConverterApp(tk.Tk):
         self.resizable(True, True)
         self.minsize(900, 640)
 
+        _icon_path = _resource_root() / "icon" / "ios" / "AppIcon-1024.png"
+        if _icon_path.exists():
+            _icon = tk.PhotoImage(file=str(_icon_path))
+            self.wm_iconphoto(True, _icon)
+
         self.cjpegli = find_cjpegli()
         self.cjxl = find_cjxl()
         self.djxl = find_djxl()

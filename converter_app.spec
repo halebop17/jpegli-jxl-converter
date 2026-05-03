@@ -66,7 +66,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='JPG Master - JPEGLI & JXL Converter.app',
-    icon=None,
+    icon=str(project_root / 'icon' / 'app.icns'),
     bundle_identifier='com.halebop17.jpegli-converter',
     info_plist={
         'CFBundleName': 'JPG Master - JPEGLI & JXL Converter',
