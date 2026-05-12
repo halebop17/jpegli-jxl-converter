@@ -24,6 +24,8 @@ swift/Vendor/src/
 swift/Vendor/build/
 swift/Vendor/downloads/
 swift/Vendor/build-logs/
+swift/PLAN.md
+swift/README.md
 **/xcuserdata/
 **/*.xcuserstate
 **/*.xcuserdatad/
