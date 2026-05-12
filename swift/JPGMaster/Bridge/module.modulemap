@@ -1,0 +1,26 @@
+// module.modulemap
+// Exposes vendored C library headers to Swift as modules.
+// Headers are resolved via HEADER_SEARCH_PATHS (Vendor/build/include).
+//
+// Usage from Swift:
+//     import CTiff
+//     import CPng
+//     import CLcms2
+
+module CTiff {
+    header "shim_tiff.h"
+    export *
+    link "tiff"
+}
+
+module CPng {
+    header "shim_png.h"
+    export *
+    link "png16"
+}
+
+module CLcms2 {
+    header "shim_lcms2.h"
+    export *
+    link "lcms2"
+}

@@ -2,6 +2,13 @@
 
 A macOS desktop app that converts TIFF, PNG, and JPEG sources to high-quality JPEG or JPEG XL.
 
+> **Two implementations live in this repo.** The reference
+> implementation is the Python / Tk app described below
+> ([converter_app.py](converter_app.py)). A native Swift / SwiftUI port
+> is in development under [swift/](swift/) — see [swift/PLAN.md](swift/PLAN.md)
+> for the development plan and [swift/README.md](swift/README.md) for
+> build instructions.
+
 Built around Google's [jpegli](https://github.com/google/jpegli) encoder and JPEG XL tooling, the app supports TIFF→JPEG, PNG→JPEG, TIFF→JXL, PNG→JXL, JPEG→JXL lossless transcode, and JXL→JPEG round-trip reconstruction. That JPEG→JXL lossless path is a special workflow not found in most converters, because it preserves JPEG data exactly while migrating it into the JXL container.
 
 jpegli is currently one of the strongest JPEG encoders available for real-world photo export workflows because it improves quality-per-byte while remaining 100% baseline JPEG compatible. In practice, compared with older libjpeg-style encoders used in many photo apps and pipelines, jpegli typically delivers:

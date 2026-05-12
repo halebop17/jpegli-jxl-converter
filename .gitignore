@@ -14,3 +14,20 @@ claude.md
 docs/
 
 *.spec.tmp
+
+# Xcode / Swift app
+swift/JPGMaster.xcodeproj/
+swift/JPGMaster.xcworkspace/
+swift/build/
+swift/DerivedData/
+swift/Vendor/src/
+swift/Vendor/build/
+swift/Vendor/downloads/
+swift/Vendor/build-logs/
+**/xcuserdata/
+**/*.xcuserstate
+**/*.xcuserdatad/
+.swiftpm/
+
+# Release artifacts (signed/notarized .app + DMG, regenerable from source)
+release/

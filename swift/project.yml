@@ -1,0 +1,156 @@
+# XcodeGen specification for the JPGMaster macOS app.
+# Regenerate the .xcodeproj with:    xcodegen generate
+# Install XcodeGen with:              brew install xcodegen
+
+name: JPGMaster
+options:
+  bundleIdPrefix: com.halebop.jpgmaster
+  deploymentTarget:
+    macOS: "13.0"
+  defaultConfig: Release
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+  groupSortPosition: top
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+    SWIFT_VERSION: "5.10"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    ARCHS: "arm64 x86_64"
+    ONLY_ACTIVE_ARCH: NO
+    ENABLE_HARDENED_RUNTIME: YES
+    CLANG_ENABLE_OBJC_ARC: YES
+    CLANG_CXX_LANGUAGE_STANDARD: "gnu++17"
+    CLANG_CXX_LIBRARY: "libc++"
+    SWIFT_OBJC_BRIDGING_HEADER: "JPGMaster/Bridge/Bridging-Header.h"
+    HEADER_SEARCH_PATHS:
+      - "$(SRCROOT)/Vendor/build/include"
+      - "$(SRCROOT)/JPGMaster/Bridge"
+    LIBRARY_SEARCH_PATHS:
+      - "$(SRCROOT)/Vendor/build/lib"
+    OTHER_LDFLAGS:
+      - "-ltiff"
+      - "-lpng16"
+      - "-llcms2"
+      - "-lexiv2"
+      - "-lINIReader"
+      - "-linih"
+      - "-lexpat"
+      - "-lz"
+      - "-lc++"
+      - "-liconv"
+    SWIFT_INCLUDE_PATHS:
+      - "$(SRCROOT)/JPGMaster/Bridge"
+    GCC_OPTIMIZATION_LEVEL: s
+    SWIFT_OPTIMIZATION_LEVEL: "-O"
+    DEAD_CODE_STRIPPING: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+  configs:
+    Debug:
+      GCC_OPTIMIZATION_LEVEL: 0
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+      DEBUG_INFORMATION_FORMAT: dwarf
+    Release:
+      DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
+
+targets:
+  JPGMaster:
+    type: application
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: JPGMaster
+        excludes:
+          - "Bridge/Bridging-Header.h"
+          - "**/*.modulemap"
+    info:
+      path: JPGMaster/Resources/Info.plist
+      properties:
+        CFBundleName: JPG Master
+        CFBundleDisplayName: JPG Master
+        CFBundleIdentifier: com.halebop.jpgmaster
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundlePackageType: APPL
+        CFBundleInfoDictionaryVersion: "6.0"
+        LSMinimumSystemVersion: "13.0"
+        NSHighResolutionCapable: true
+        NSSupportsAutomaticGraphicsSwitching: true
+        NSPrincipalClass: NSApplication
+        NSHumanReadableCopyright: "© 2026 halebop"
+        CFBundleIconFile: AppIcon
+        CFBundleIconName: AppIcon
+        LSApplicationCategoryType: "public.app-category.photography"
+        NSDesktopFolderUsageDescription: "JPG Master needs access to convert image files you choose."
+        NSDocumentsFolderUsageDescription: "JPG Master needs access to convert image files you choose."
+        NSDownloadsFolderUsageDescription: "JPG Master needs access to convert image files you choose."
+        NSRemovableVolumesUsageDescription: "JPG Master needs access to convert image files on removable drives."
+    entitlements:
+      path: JPGMaster/Resources/JPGMaster.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+        com.apple.security.cs.allow-jit: false
+        com.apple.security.cs.allow-unsigned-executable-memory: false
+        com.apple.security.cs.disable-library-validation: true
+        com.apple.security.cs.allow-dyld-environment-variables: false
+    settings:
+      base:
+        PRODUCT_NAME: "JPG Master"
+        PRODUCT_BUNDLE_IDENTIFIER: com.halebop.jpgmaster
+    preBuildScripts:
+      - name: "Verify vendored dependencies"
+        script: |
+          if ! "$SRCROOT/Vendor/build-deps.sh" --check; then
+            echo "error: vendored dependencies not built. run:  swift/Vendor/build-deps.sh"
+            exit 1
+          fi
+        basedOnDependencyAnalysis: false
+    postBuildScripts:
+      - name: "Embed encoder binaries (cjpegli, cjxl, djxl, dylibs)"
+        script: |
+          set -euo pipefail
+          BIN_SRC="$SRCROOT/../bin"
+          BIN_DST="$BUILT_PRODUCTS_DIR/$PRODUCT_NAME.app/Contents/Resources/bin"
+          mkdir -p "$BIN_DST"
+          for f in cjpegli cjxl djxl libhwy.1.dylib libjpeg.8.dylib libjxl_cms.0.12.dylib libjxl_threads.0.12.dylib liblcms2.2.dylib; do
+            if [ -f "$BIN_SRC/$f" ]; then
+              cp -p "$BIN_SRC/$f" "$BIN_DST/"
+            fi
+          done
+        inputFiles:
+          - $(SRCROOT)/../bin/cjpegli
+        outputFiles:
+          - $(BUILT_PRODUCTS_DIR)/$(PRODUCT_NAME).app/Contents/Resources/bin/cjpegli
+        basedOnDependencyAnalysis: false
+      - name: "Codesign embedded binaries"
+        script: |
+          set -euo pipefail
+          BIN_DIR="$BUILT_PRODUCTS_DIR/$PRODUCT_NAME.app/Contents/Resources/bin"
+          if [ ! -d "$BIN_DIR" ]; then exit 0; fi
+          IDENTITY="${EXPANDED_CODE_SIGN_IDENTITY:-$CODE_SIGN_IDENTITY}"
+          : "${IDENTITY:=-}"
+          ENTS="$SRCROOT/JPGMaster/Resources/EmbeddedTool.entitlements"
+          # Sign dylibs first (no entitlements — they are libraries, not
+          # executables), then sign each executable with the
+          # disable-library-validation entitlement so the hardened runtime
+          # accepts our ad-hoc-signed dylibs alongside it.
+          for f in "$BIN_DIR"/*.dylib; do
+            [ -f "$f" ] || continue
+            codesign --force --options=runtime --timestamp=none --sign "$IDENTITY" "$f"
+          done
+          for f in "$BIN_DIR"/*; do
+            [ -f "$f" ] || continue
+            case "$f" in
+              *.dylib) ;;
+              *)
+                codesign --force --options=runtime --timestamp=none \
+                         --entitlements "$ENTS" \
+                         --sign "$IDENTITY" "$f" ;;
+            esac
+          done
+        basedOnDependencyAnalysis: false
